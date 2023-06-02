@@ -12,8 +12,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
-
 function wss_register_meta_boxes() {
     add_meta_box('wss_metabox', 'Configuration', 'wss_display_callback', 'wss_product');
 }
@@ -106,6 +104,7 @@ function wss_register_locator_settings() {
     register_setting('wss-store-locator-settings', 'wss_locator_url');
 }
 add_action('admin_init', 'wss_register_locator_settings');
+
 
 function wss_add_to_cart_validation($passed, $product_id, $quantity) {
     if (!$passed) {
@@ -203,10 +202,42 @@ function wss_display_shortcode($atts) {
 }
 add_shortcode('wss-display', 'wss_display_shortcode');
 
-function change_add_to_cart_text($text) {
-    // Modify the button text as needed
-    $text = 'Select Options';
-
-    return $text;
+function wss_add_to_cart_admin_pages() {
+    add_menu_page('Add To Cart Text', 'Add To Cart Text', 'manage_options', 'add-to-cart-text', 'wss_add_to_cart_text_page', 'dashicons-cart', 20);
 }
-add_filter('woocommerce_product_single_add_to_cart_text', 'change_add_to_cart_text');
+add_action('admin_menu', 'wss_add_to_cart_admin_pages');
+
+function wss_add_to_cart_text_page() {
+    $custom_text = get_option('wss_custom_add_to_cart_text', '');
+    ?>
+    <div class="wrap">
+        <h2>Add To Cart Button Text</h2>
+        <form method="post" action="">
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row">Text:</th>
+                    <td>
+                        <input type="text" name="wss_custom_add_to_cart_text" value="<?php echo esc_attr($custom_text); ?>" />
+                    </td>
+                </tr>
+            </table>
+            <?php submit_button('Save'); ?>
+        </form>
+    </div>
+    <?php
+}
+
+function wss_save_custom_add_to_cart_text() {
+    if (array_key_exists('wss_custom_add_to_cart_text', $_POST)) {
+        update_option('wss_custom_add_to_cart_text', sanitize_text_field($_POST['wss_custom_add_to_cart_text']));
+    }
+}
+add_action('admin_init', 'wss_save_custom_add_to_cart_text');
+
+function wss_change_cart_button_text() {
+    $custom_text = get_option('wss_custom_add_to_cart_text', '');
+    return $custom_text ?: __('Add to cart', 'woocommerce');
+}
+add_filter('woocommerce_product_single_add_to_cart_text', 'wss_change_cart_button_text');
+add_filter('woocommerce_product_add_to_cart_text', 'wss_change_cart_button_text');
+
