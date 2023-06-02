@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce Store Selector
 Plugin URI: https://woostoreselect.wordpresswizard.net/
 Description: A plugin to display a store selector popup when adding a product to the cart in WooCommerce.
-Version: 1.0.1
+Version: 1.0.2
 Author: Darren Kandekore
 Author URI: https://www.darrenk.uk
 */
@@ -12,16 +12,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-function wss_register_custom_post_type() {
-    $args = array(
-        'public' => false,
-        'show_ui' => true,
-        'label'  => 'Product Store Configurations',
-        'supports' => array('title')
-    );
-    register_post_type('wss_product', $args);
-}
-add_action('init', 'wss_register_custom_post_type');
+
 
 function wss_register_meta_boxes() {
     add_meta_box('wss_metabox', 'Configuration', 'wss_display_callback', 'wss_product');
@@ -45,10 +36,11 @@ function wss_save_meta_box($post_id) {
 }
 add_action('save_post', 'wss_save_meta_box');
 
-function wss_add_admin_page() {
+function wss_add_admin_pages() {
     add_menu_page('Store Management', 'Store Management', 'manage_options', 'store-management', 'wss_store_management_page', 'dashicons-store', 20);
+    add_submenu_page('store-management', 'Store Locator Settings', 'Store Locator', 'manage_options', 'store-locator-settings', 'wss_store_locator_settings_page');
 }
-add_action('admin_menu', 'wss_add_admin_page');
+add_action('admin_menu', 'wss_add_admin_pages');
 
 function wss_store_management_page() {
     $stores = get_option('wss_stores', array());
@@ -84,10 +76,36 @@ function wss_store_management_page() {
     <?php
 }
 
+function wss_store_locator_settings_page() {
+    $storeLocatorUrl = get_option('wss_locator_url', '');
+    ?>
+    <div class="wrap">
+        <h2>Store Locator Settings</h2>
+        <form method="post" action="options.php">
+            <?php settings_fields('wss-store-locator-settings'); ?>
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row">Store Locator URL:</th>
+                    <td>
+                        <input type="text" name="wss_locator_url" value="<?php echo esc_attr($storeLocatorUrl); ?>" placeholder="Store Locator URL" />
+                    </td>
+                </tr>
+            </table>
+            <?php submit_button(); ?>
+        </form>
+    </div>
+    <?php
+}
+
 function wss_register_settings() {
     register_setting('wss-store-settings', 'wss_stores');
 }
 add_action('admin_init', 'wss_register_settings');
+
+function wss_register_locator_settings() {
+    register_setting('wss-store-locator-settings', 'wss_locator_url');
+}
+add_action('admin_init', 'wss_register_locator_settings');
 
 function wss_add_to_cart_validation($passed, $product_id, $quantity) {
     if (!$passed) {
@@ -96,6 +114,7 @@ function wss_add_to_cart_validation($passed, $product_id, $quantity) {
 
     $product_url = get_permalink($product_id);
     $stores = get_option('wss_stores', array());
+    $storeLocatorUrl = get_option('wss_locator_url', '');
 
     $options_html = '';
     foreach ($stores as $store) {
@@ -111,6 +130,9 @@ function wss_add_to_cart_validation($passed, $product_id, $quantity) {
         <div class="wss-popup">
             <div class="wss-header">
                 <h2>Choose a Store</h2>
+                <?php if (!empty($storeLocatorUrl)) : ?>
+                    <a href="<?php echo esc_url($storeLocatorUrl); ?>" class="store-locator-link">Click here to use the store locator</a>
+                <?php endif; ?>
                 <span class="wss-close">&times;</span>
             </div>
             <div class="wss-body">
@@ -118,7 +140,7 @@ function wss_add_to_cart_validation($passed, $product_id, $quantity) {
                     <option value="">Select a Store</option>
                     <?php echo $options_html; ?>
                 </select>
-                <button class="wss-add-to-cart">Select Store</button>
+                <button class="wss-add-to-cart">Add to Cart</button>
             </div>
         </div>
     </div>
@@ -162,6 +184,9 @@ function wss_display_shortcode($atts) {
         <div class="wss-popup">
             <div class="wss-header">
                 <h2>Choose a Store</h2>
+                <?php if (!empty($storeLocatorUrl)) : ?>
+                    <a href="<?php echo esc_url($storeLocatorUrl); ?>" class="store-locator-link">Click here to use the store locator</a>
+                <?php endif; ?>
                 <span class="wss-close">&times;</span>
             </div>
             <div class="wss-body">
@@ -169,6 +194,7 @@ function wss_display_shortcode($atts) {
                     <option value="">Select a Store</option>
                     <?php echo $options_html; ?>
                 </select>
+                <button class="wss-add-to-cart">Add to Cart</button>
             </div>
         </div>
     </div>
