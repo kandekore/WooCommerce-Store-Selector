@@ -118,7 +118,7 @@ function wss_add_to_cart_validation($passed, $product_id, $quantity) {
                     <option value="">Select a Store</option>
                     <?php echo $options_html; ?>
                 </select>
-                <button class="wss-add-to-cart">Add to Cart</button>
+                <button class="wss-add-to-cart">Select Store</button>
             </div>
         </div>
     </div>
@@ -176,3 +176,11 @@ function wss_display_shortcode($atts) {
     return ob_get_clean();
 }
 add_shortcode('wss-display', 'wss_display_shortcode');
+
+function change_add_to_cart_text($text) {
+    // Modify the button text as needed
+    $text = 'Select Options';
+
+    return $text;
+}
+add_filter('woocommerce_product_single_add_to_cart_text', 'change_add_to_cart_text');
